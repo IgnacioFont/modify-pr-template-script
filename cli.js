@@ -1,28 +1,29 @@
 const fs = require('fs');
 const readline = require('readline');
-const nodegit = require('nodegit');
+const shell = require('shelljs')
+const path = require('path')
 
-const url = 'git@github.com:mercadolibre/fury_cx-chimera.git';
+const resolvedPath = path.resolve(__dirname, './tmp')
+shell.mkdir(resolvedPath)
 
 const readInterface = readline.createInterface({
     input: fs.createReadStream(process.argv[2]),
 });
 
-readInterface.on('line', function(line) {
-    const path = `repos/${line}`;
-    {
-        const cloneRepo = async () => {
-            try {
-                const repo = await nodegit.Clone(url, path);
-                console.log(repo)
-            } catch (e) {
-                console.log(e);
-            }
-        };
-        fs.mkdir(`./repos/${line}`, { recursive: true }, (err) => {
-            if (err) throw err
-        })
-    }
+const writeFile = (repoName) => {
+    // const repoName = cloneUrl.match(/.+?(?=.git)/g);
+    // fs.createReadStream('PULL_REQUEST_TEMPLATE.md').pipe(fs.createWriteStream('holaaaa.md'));
+    fs.copyFile(`../PULL_REQUEST_TEMPLATE.md`, `./${repoName}/PULL_REQUEST_TEMPLATE.md`, (err) => {
+        if (err) throw err;
+        console.log('el copiado salió bien');
+    });
+};
 
-    console.log(line)
+readInterface.on('line', function(cloneUrl) {
+    const repoName = cloneUrl.match(/\/(.+)\.git/)[1];
+    console.log({ repoName })
+    shell.cd(resolvedPath)
+    shell.exec(`git clone ${cloneUrl}`, () => writeFile(repoName));
+
+    console.log(cloneUrl)
 });
